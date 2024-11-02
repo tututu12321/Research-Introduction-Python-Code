@@ -1,0 +1,53 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from control.matlab import tf, feedback, impulse, step, bode
+
+# パラメータ設定
+K = 2.0    # プラントの増幅率
+tau = 1.0  # プラントの時定数（例: 1秒）
+
+# PID制御器のパラメータ
+Kp = 1.5   # 比例ゲイン
+Ki = 0.7   # 積分ゲイン
+Kd = 0.2   # 微分ゲイン
+
+# PID制御器の伝達関数: C(s) = Kp + Ki/s + Kd*s
+num_pid = [Kd, Kp, Ki]
+den_pid = [1, 0]
+pid_controller = tf(num_pid, den_pid)
+
+# 増幅付き一次遅れ系プラントの伝達関数: G(s) = K / (tau*s + 1)
+num_plant = [K]
+den_plant = [tau, 1]
+plant = tf(num_plant, den_plant)
+
+# フィードバック付き閉ループシステム
+system = feedback(pid_controller * plant, 1)
+
+# インパルス応答のプロット
+t_impulse, y_impulse = impulse(system)
+plt.figure(figsize=(10, 6))
+plt.plot(t_impulse, y_impulse, label="Impulse Response")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.title("Impulse Response of PID-Controlled System with Feedback")
+plt.legend()
+plt.grid()
+
+# ステップ応答のプロット
+t_step, y_step = step(system)
+plt.figure(figsize=(10, 6))
+plt.plot(t_step, y_step, label="Step Response")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.title("Step Response of PID-Controlled System with Feedback")
+plt.legend()
+plt.grid()
+
+# ボード線図のプロット
+plt.figure(figsize=(10, 6))
+mag, phase, omega = bode(system, dB=True, plot=True)
+plt.suptitle("Bode Plot of PID-Controlled System with Feedback")
+
+# グラフ表示
+plt.show()
