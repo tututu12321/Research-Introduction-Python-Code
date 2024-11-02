@@ -1,0 +1,50 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# パラメータ設定
+R = 1000      # 抵抗値（1kΩ）
+C = 1e-6      # キャパシタの容量（1μF）
+V_in = 5      # 入力電圧（5V）
+T = 0.01      # シミュレーション時間（10ms）
+dt = 1e-5     # 時間刻み（10us）
+
+# 時間軸の設定
+t = np.arange(0, T, dt)
+
+# スイッチの状態（オンとオフを切り替える）
+# 例として、最初の5msはオン、その後はオフ
+switch_on_time = T / 2  # スイッチを切り替える時間
+switch_state = np.where(t < switch_on_time, 1, 0)  # 0: オフ, 1: オン
+
+# キャパシタの電圧の計算
+V_c = np.zeros_like(t)
+for i in range(1, len(t)):
+    if switch_state[i] == 1:
+        # スイッチがオンのとき、充電
+        dV_c = (V_in - V_c[i - 1]) / (R * C) * dt
+    else:
+        # スイッチがオフのとき、放電
+        dV_c = -V_c[i - 1] / (R * C) * dt
+    V_c[i] = V_c[i - 1] + dV_c
+
+# プロット
+plt.figure(figsize=(10, 6))
+
+# 入力電圧のプロット
+plt.subplot(2, 1, 1)
+plt.plot(t, V_in * switch_state, label="Input Voltage (V_in)", color='b')
+plt.ylabel("Voltage [V]")
+plt.title("Input Voltage and Capacitor Voltage")
+plt.grid()
+plt.legend()
+
+# キャパシタ電圧のプロット
+plt.subplot(2, 1, 2)
+plt.plot(t, V_c, label="Capacitor Voltage (V_c)", color='r')
+plt.xlabel("Time [s]")
+plt.ylabel("Voltage [V]")
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
