@@ -1,0 +1,61 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parameters for the sine wave and A/D conversion
+frequency = 5            # Frequency of the sine wave (Hz)
+sampling_rate = 50       # Sampling rate (samples per second)
+duration = 1             # Duration of the sine wave (seconds)
+bit_depth = 8            # Bit depth for quantization (e.g., 8 bits)
+
+# Generate the time axis for the analog signal
+t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+
+# Generate the analog sine wave signal
+amplitude = 1            # Amplitude of the sine wave
+analog_signal = amplitude * np.sin(2 * np.pi * frequency * t)
+
+# Sampling (in this case, we use the same generated signal as "sampled signal")
+sampled_signal = analog_signal.copy()
+
+# Quantization
+quantization_levels = 2 ** bit_depth
+quantized_signal = np.round((sampled_signal + amplitude) * (quantization_levels / (2 * amplitude)) - 0.5)
+quantized_signal = np.clip(quantized_signal, 0, quantization_levels - 1)  # Clip values within the bit depth range
+quantized_signal = quantized_signal * (2 * amplitude / quantization_levels) - amplitude
+
+# Encoding (binary representation)
+encoded_signal = [f"{int(value):0{bit_depth}b}" for value in quantized_signal.astype(int)]
+
+# Plotting the signals for visualization
+plt.figure(figsize=(10, 8))
+
+# Plot Original Analog Signal
+plt.subplot(3, 1, 1)
+plt.plot(t, analog_signal, label="Analog Signal")
+plt.title("Analog Signal (Continuous)")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.legend()
+
+# Plot Sampled Signal
+plt.subplot(3, 1, 2)
+plt.stem(t, sampled_signal, 'b', markerfmt="bo", label="Sampled Signal")
+plt.title("Sampled Signal")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.legend()
+
+# Plot Quantized Signal
+plt.subplot(3, 1, 3)
+plt.step(t, quantized_signal, where='mid', label="Quantized Signal", color="orange")
+plt.title("Quantized Signal")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+# Display encoded signal (showing the first 10 samples for brevity)
+print("Encoded Signal (first 10 samples):")
+print(encoded_signal[:10])
