@@ -1,0 +1,58 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import signal
+
+# CR circuit parameters
+R = 1e3          # Resistance in ohms (1 kΩ)
+C = 1e-6         # Capacitance in farads (1 µF)
+RC = R * C       # Time constant
+
+# Transfer function H(s) = 1 / (1 + sRC)
+num = [1]              # Numerator of transfer function
+den = [RC, 1]          # Denominator of transfer function
+system = signal.TransferFunction(num, den)
+
+# Frequency range for Bode plot
+frequencies = np.logspace(1, 6, 500)  # Frequency range from 10 Hz to 1 MHz
+
+# Calculate Bode magnitude and phase
+w, mag, phase = signal.bode(system, w=frequencies * 2 * np.pi)
+
+# Plot Bode magnitude response
+plt.figure(figsize=(10, 8))
+plt.subplot(3, 1, 1)
+plt.semilogx(frequencies, mag)  # Bode magnitude plot
+plt.title("Bode Plot and Sine Wave Response of CR Circuit")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Magnitude (dB)")
+plt.grid(True, which="both")
+
+# Plot Bode phase response
+plt.subplot(3, 1, 2)
+plt.semilogx(frequencies, phase)  # Bode phase plot
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Phase (degrees)")
+plt.grid(True, which="both")
+
+# Time domain simulation for a sine wave input
+f_input = 100  # Input frequency of the sine wave in Hz
+t = np.linspace(0, 0.05, 1000)  # Time array from 0 to 0.05 seconds
+
+# Generate the input sine wave
+input_signal = np.sin(2 * np.pi * f_input * t)
+
+# Calculate the output using the lsim function
+t_out, output_signal, _ = signal.lsim(system, U=input_signal, T=t)
+
+# Plot input and output signals
+plt.subplot(3, 1, 3)
+plt.plot(t, input_signal, label="Input Signal (Sine Wave)")
+plt.plot(t_out, output_signal, label="Output Signal (Filtered)", linestyle="--")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.legend()
+plt.grid(True)
+
+# Display all plots
+plt.tight_layout()
+plt.show()
