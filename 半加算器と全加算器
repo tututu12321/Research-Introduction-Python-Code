@@ -1,0 +1,49 @@
+import tensorflow as tf
+import numpy as np
+
+# 半加算器のデータセット
+X_half_adder = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+Y_half_adder = np.array([[0, 0], [1, 0], [1, 0], [0, 1]])  # 出力: [和 S, キャリー C]
+
+# 全加算器のデータセット
+X_full_adder = np.array([[0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 1, 1], 
+                         [1, 0, 0], [1, 0, 1], [1, 1, 0], [1, 1, 1]])
+Y_full_adder = np.array([[0, 0], [1, 0], [1, 0], [0, 1], 
+                         [1, 0], [0, 1], [0, 1], [1, 1]])  # 出力: [和 S, キャリー C_out]
+
+# Dフリップフロップのデータセット (1ビット入力とクロック信号)
+X_dff = np.array([[0, 0], [1, 0], [0, 1], [1, 1]])  # [データ, クロック]
+Y_dff = np.array([[0], [0], [0], [1]])  # クロックが1のときのみデータが反映される
+
+# モデル作成関数
+def build_model(input_dim, output_dim):
+    model = tf.keras.Sequential([
+        tf.keras.layers.Dense(8, activation='relu', input_shape=(input_dim,)),
+        tf.keras.layers.Dense(output_dim, activation='sigmoid')  # 出力のための2ビット
+    ])
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    return model
+
+# 半加算器モデル
+model_half_adder = build_model(2, 2)
+model_half_adder.fit(X_half_adder, Y_half_adder, epochs=500, verbose=0)
+print("Half Adder Test Results:")
+for x in X_half_adder:
+    y_pred = model_half_adder.predict(np.array([x]))
+    print(f"Input: {x} -> Predicted Output (S, C): {np.round(y_pred).astype(int)}")
+
+# 全加算器モデル
+model_full_adder = build_model(3, 2)
+model_full_adder.fit(X_full_adder, Y_full_adder, epochs=500, verbose=0)
+print("\nFull Adder Test Results:")
+for x in X_full_adder:
+    y_pred = model_full_adder.predict(np.array([x]))
+    print(f"Input: {x} -> Predicted Output (S, C_out): {np.round(y_pred).astype(int)}")
+
+# Dフリップフロップモデル
+model_dff = build_model(2, 1)
+model_dff.fit(X_dff, Y_dff, epochs=500, verbose=0)
+print("\nD Flip-Flop Test Results:")
+for x in X_dff:
+    y_pred = model_dff.predict(np.array([x]))
+    print(f"Input: {x} -> Predicted Output (Q): {np.round(y_pred).astype(int)}")
