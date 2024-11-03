@@ -1,0 +1,47 @@
+import numpy as np
+import scipy.signal as signal
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+# ノイズを含むサンプル信号データの生成
+np.random.seed(0)
+time = np.linspace(0, 1, 100)
+signal_clean = np.sin(2 * np.pi * 5 * time)  # 周波数5Hzの正弦波
+noise = np.random.normal(0, 0.5, time.shape)
+signal_noisy = signal_clean + noise  # ノイズを加えた信号
+
+# デジタルフィルタの設計 (ローパスフィルタでノイズ除去)
+sampling_rate = 100  # サンプリング周波数
+cutoff_freq = 10  # カットオフ周波数 (Hz)
+nyquist = 0.5 * sampling_rate
+normal_cutoff = cutoff_freq / nyquist
+b, a = signal.butter(3, normal_cutoff, btype='low', analog=False)  # バターワースフィルタ
+signal_filtered = signal.filtfilt(b, a, signal_noisy)  # フィルタリング
+
+# フィルタリング結果のプロット
+plt.figure(figsize=(10, 6))
+plt.plot(time, signal_noisy, label="Noisy Signal")
+plt.plot(time, signal_clean, label="Clean Signal")
+plt.plot(time, signal_filtered, label="Filtered Signal", linestyle="--")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.legend()
+plt.title("Signal Filtering with Digital Filter")
+plt.show()
+
+# 機械学習モデルのための特徴量とラベルの生成
+# 信号のエネルギーと平均値を特徴量として使用
+X = np.array([[np.mean(signal_noisy)], [np.mean(signal_filtered)]])  # フィルタ前とフィルタ後の信号
+y = np.array([0, 1])  # 0: ノイズを含む信号, 1: フィルタ後の信号 (例として2クラス)
+
+# データの分割と機械学習モデルのトレーニング
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=0)
+model = RandomForestClassifier(n_estimators=10, random_state=0)
+model.fit(X_train, y_train)
+
+# テストデータでの精度評価
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print("Classification accuracy:", accuracy)
