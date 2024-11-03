@@ -1,0 +1,106 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ReRAMSynapse クラス: ReRAMベースのシナプスを表現するクラス
+class ReRAMSynapse:
+    def __init__(self, resistance_on, resistance_off):
+        """
+        コンストラクタで抵抗の状態を初期化
+        resistance_on: ReRAMのON状態の抵抗値
+        resistance_off: ReRAMのOFF状態の抵抗値
+        """
+        self.resistance_on = resistance_on
+        self.resistance_off = resistance_off
+        self.weight = 0  # 初期重み（0がOFF, 1がON）
+
+    def set_weight(self, weight):
+        """
+        重みを設定（0から1の範囲）
+        """
+        self.weight = np.clip(weight, 0, 1)
+
+    def calculate_current(self, voltage):
+        """
+        入力電圧に基づいて電流を計算
+        """
+        resistance = self.resistance_on * self.weight + self.resistance_off * (1 - self.weight)
+        current = voltage / resistance
+        return current
+
+# NeuralNetworkLayer クラス: ReRAMシナプスを持つニューラルネットワーク層
+class NeuralNetworkLayer:
+    def __init__(self, num_neurons, num_inputs, resistance_on, resistance_off):
+        """
+        num_neurons: ニューロンの数
+        num_inputs: 各ニューロンへの入力数
+        resistance_on: ReRAMのON状態の抵抗値
+        resistance_off: ReRAMのOFF状態の抵抗値
+        """
+        self.num_neurons = num_neurons
+        self.num_inputs = num_inputs
+        self.synapses = [[ReRAMSynapse(resistance_on, resistance_off) for _ in range(num_inputs)]
+                         for _ in range(num_neurons)]
+        self.biases = np.zeros(num_neurons)
+
+    def set_weights(self, weights):
+        """
+        重みを設定
+        weights: shapeが(num_neurons, num_inputs)の2次元リスト
+        """
+        for i in range(self.num_neurons):
+            for j in range(self.num_inputs):
+                self.synapses[i][j].set_weight(weights[i][j])
+
+    def set_biases(self, biases):
+        """
+        バイアスを設定
+        """
+        self.biases = biases
+
+    def calculate_outputs(self, inputs):
+        """
+        各ニューロンの出力を計算
+        """
+        outputs = []
+        for i in range(self.num_neurons):
+            neuron_output = sum(self.synapses[i][j].calculate_current(inputs[j]) for j in range(self.num_inputs))
+            neuron_output += self.biases[i]
+            outputs.append(neuron_output)
+        return np.array(outputs)
+
+# デモ: 特定の重みと入力電圧を設定して各ニューロンの出力電流を計算し、結果を可視化
+def demo():
+    num_neurons = 3  # ニューロンの数
+    num_inputs = 2   # 入力の数
+    resistance_on = 1e3  # ON状態の抵抗（オーム）
+    resistance_off = 1e6  # OFF状態の抵抗（オーム）
+
+    # ニューラルネットワーク層の作成
+    layer = NeuralNetworkLayer(num_neurons, num_inputs, resistance_on, resistance_off)
+
+    # 重みとバイアスの設定
+    weights = [[0.1, 0.9], [0.5, 0.5], [0.9, 0.1]]
+    biases = [0.01, 0.02, 0.03]
+    layer.set_weights(weights)
+    layer.set_biases(biases)
+
+    # 入力電圧の設定
+    inputs = [1.0, 0.5]  # 電圧[V]
+
+    # 各ニューロンの出力電流を計算
+    outputs = layer.calculate_outputs(inputs)
+
+    # 結果の表示
+    for i, output in enumerate(outputs):
+        print(f"Neuron {i + 1} output current: {output:.6f} A")
+
+    # 結果を可視化
+    plt.figure(figsize=(8, 4))
+    plt.bar(range(num_neurons), outputs, color='skyblue')
+    plt.xlabel('Neuron Index')
+    plt.ylabel('Output Current (A)')
+    plt.title('Output Current for Each Neuron in ReRAM-based Neural Network Layer')
+    plt.show()
+
+# デモの実行
+demo()
