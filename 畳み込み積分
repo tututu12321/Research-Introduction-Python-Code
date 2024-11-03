@@ -1,0 +1,54 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define the time axis
+t = np.linspace(0, 100, 500)
+
+# Define impulse response h(t) (exponential decay)
+h = np.exp(-t / 10)
+
+# Define input signal x(t) (rectangular pulse)
+x = np.zeros_like(t)
+x[50:100] = 1
+x[200:250] = 1
+
+# Compute convolution using the impulse response
+y = np.convolve(x, h)[:len(t)] * (t[1] - t[0])  # Scale by time step
+
+# Plotting
+fig, axs = plt.subplots(4, 1, figsize=(10, 12))
+fig.suptitle("System Output Obtained Through Convolution Integration with the Impulse Response")
+
+# Plot impulse response h(t)
+axs[0].plot(t, h, 'r', linewidth=2)
+axs[0].fill_between(t, h, color="orange", alpha=0.3)
+axs[0].set_title("Impulse Response: $h(t)$")
+axs[0].set_xlim([0, 100])
+axs[0].grid()
+
+# Plot input signal x(t)
+axs[1].plot(t, x, 'b', linewidth=2)
+axs[1].set_title("Input Signal: $x(t)$")
+axs[1].set_xlim([0, 100])
+axs[1].grid()
+
+# Example of the convolution process (x(u) * h(t - u) array with delay at a specific t)
+delay_index = 80  # Example delay index
+delayed_h = np.roll(h, delay_index)  # Shift the impulse response
+delayed_h[:delay_index] = 0
+product = x * delayed_h
+axs[2].plot(t, product, 'r')
+axs[2].fill_between(t, product, color="yellow", alpha=0.3)
+axs[2].axvline(x=t[delay_index], color="k", linestyle="--")
+axs[2].set_title(r"Array of $x(u) \cdot h(t - u)$ ('u' is the delay)")
+axs[2].set_xlim([0, 100])
+axs[2].grid()
+
+# Plot output signal y(t)
+axs[3].plot(t, y, 'b', linewidth=2)
+axs[3].set_title(r"Output Signal: $y(t) = \int x(u) \cdot h(t - u) \, du$")
+axs[3].set_xlim([0, 100])
+axs[3].grid()
+
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+plt.show()
