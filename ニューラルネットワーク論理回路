@@ -1,57 +1,65 @@
-import torch
-import torch.nn as nn
-import torch.optim as optim
+import numpy as np
+from sklearn.linear_model import SGDClassifier
+import matplotlib.pyplot as plt
 
-# データセット（ANDゲートとORゲートの入力と出力）
-# 入力の各行は[入力1, 入力2]で、出力は期待される結果（0または1）
-data = {
-    "AND": {
-        "inputs": torch.tensor([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=torch.float32),
-        "outputs": torch.tensor([[0], [0], [0], [1]], dtype=torch.float32)
-    },
-    "OR": {
-        "inputs": torch.tensor([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=torch.float32),
-        "outputs": torch.tensor([[0], [1], [1], [1]], dtype=torch.float32)
-    }
-}
+# Define input data (X: input patterns)
+X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
 
-# ニューラルネットワークの定義（2入力1出力のシンプルなモデル）
-class SimpleNN(nn.Module):
-    def __init__(self):
-        super(SimpleNN, self).__init__()
-        self.layer = nn.Sequential(
-            nn.Linear(2, 4),
-            nn.ReLU(),
-            nn.Linear(4, 1),
-            nn.Sigmoid()
-        )
+# Train the AND gate model
+Y_and = np.array([0, 0, 0, 1])  # AND gate output
+mAND = SGDClassifier(loss='log_loss', max_iter=1000, tol=1e-3)
+mAND.fit(X, Y_and)
+
+# Train the OR gate model
+Y_or = np.array([0, 1, 1, 1])  # OR gate output
+mOR = SGDClassifier(loss='log_loss', max_iter=1000, tol=1e-3)
+mOR.fit(X, Y_or)
+
+# Train the NAND gate model
+Y_nand = np.array([1, 1, 1, 0])  # NAND gate output
+mNAND = SGDClassifier(loss='log_loss', max_iter=1000, tol=1e-3)
+mNAND.fit(X, Y_nand)
+
+# Generate intermediate layer output for XOR gate using OR and NAND gates
+h1 = mOR.predict(X)     # Output of OR gate
+h2 = mNAND.predict(X)    # Output of NAND gate
+X_XOR = np.array([h1, h2]).T  # Input for XOR gate
+
+# Expected output for XOR gate
+Y_XOR = np.array([0, 1, 1, 0])
+
+# Train final layer (AND gate) for XOR operation
+mXOR = SGDClassifier(loss='log_loss', max_iter=1000, tol=1e-3)
+mXOR.fit(X_XOR, Y_XOR)
+
+# Print outputs of each gate
+print("AND Gate Output:", mAND.predict(X))
+print("OR Gate Output:", mOR.predict(X))
+print("NAND Gate Output:", mNAND.predict(X))
+print("XOR Gate Output:", mXOR.predict(X_XOR))
+
+# Function to plot decision boundaries of each logic gate
+def plot_logic_gate(model, title):
+    # Create mesh grid for plotting decision boundary
+    xx, yy = np.meshgrid(np.linspace(-0.5, 1.5, 100), np.linspace(-0.5, 1.5, 100))
     
-    def forward(self, x):
-        return self.layer(x)
-
-# 学習関数
-def train_model(model, inputs, targets, epochs=1000):
-    criterion = nn.BCELoss()  # 二値交差エントロピー誤差を使用
-    optimizer = optim.SGD(model.parameters(), lr=0.1)
+    # Predict on mesh grid to get decision boundary
+    Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
     
-    for epoch in range(epochs):
-        optimizer.zero_grad()
-        outputs = model(inputs)
-        loss = criterion(outputs, targets)
-        loss.backward()
-        optimizer.step()
-        
-        if epoch % 200 == 0:
-            print(f"Epoch [{epoch}/{epochs}], Loss: {loss.item():.4f}")
-
-# ANDゲートとORゲートの学習と予測
-for gate, data in data.items():
-    print(f"\nTraining for {gate} gate:")
-    model = SimpleNN()
-    train_model(model, data["inputs"], data["outputs"])
+    # Plot decision boundary
+    plt.contourf(xx, yy, Z, alpha=0.3, cmap=plt.cm.bwr)
     
-    # 学習後にテストデータを使って出力を確認
-    with torch.no_grad():
-        predictions = model(data["inputs"])
-        print(f"{gate} gate predictions:")
-        print(predictions.round())
+    # Plot input data points
+    plt.scatter(X[:, 0], X[:, 1], c=Y_XOR, edgecolor='k', s=100, cmap=plt.cm.bwr)
+    plt.title(title)
+    plt.xlabel("x1")
+    plt.ylabel("x2")
+    plt.grid(True)
+    plt.show()
+
+# Plot decision boundaries for each gate in English
+plot_logic_gate(mAND, "AND Gate Decision Boundary")
+plot_logic_gate(mOR, "OR Gate Decision Boundary")
+plot_logic_gate(mNAND, "NAND Gate Decision Boundary")
+plot_logic_gate(mXOR, "XOR Gate Decision Boundary")
