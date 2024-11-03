@@ -1,0 +1,41 @@
+import sympy as sp
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define symbolic variables
+t, s = sp.symbols('t s')
+R, L, C = sp.symbols('R L C')  # Define circuit parameters
+
+# Define input signal as a step function
+input_signal = 1 / s  # Laplace transform of a unit step function
+
+# Define the transfer function of an LCR series circuit
+# Example: Transfer function H(s) = 1 / (L*s**2 + R*s + 1/C)
+H_s = 1 / (L * s**2 + R * s + 1 / C)
+
+# Output signal in the s-domain
+output_signal_s = H_s * input_signal
+
+# Perform the inverse Laplace transform to find the time-domain output
+output_signal_t = sp.inverse_laplace_transform(output_signal_s, s, t)
+
+print("Time-domain output signal y(t):")
+sp.pprint(output_signal_t)
+
+# Substitute specific values for R, L, C
+R_val = 1.0
+L_val = 1.0
+C_val = 1.0
+output_signal_t_numeric = output_signal_t.subs({R: R_val, L: L_val, C: C_val})
+
+# Plot the time-domain response
+time_values = np.linspace(0, 10, 100)
+output_values = [output_signal_t_numeric.evalf(subs={t: val}) for val in time_values]
+
+plt.plot(time_values, output_values, label="Output Signal $y(t)$")
+plt.title("Time-domain Response of LCR Circuit")
+plt.xlabel("Time (s)")
+plt.ylabel("Output y(t)")
+plt.grid()
+plt.legend()
+plt.show()
