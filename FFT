@@ -1,0 +1,51 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define a sample signal: combination of sine and cosine waves
+fs = 100  # Sampling frequency in Hz
+t = np.arange(0, 1, 1/fs)  # Time vector for 1 second
+freq1 = 5   # Frequency of the sine wave in Hz
+freq2 = 20  # Frequency of the cosine wave in Hz
+signal = np.sin(2 * np.pi * freq1 * t) + 0.5 * np.cos(2 * np.pi * freq2 * t)
+
+# Perform DFT using NumPy's FFT function
+dft_result = np.fft.fft(signal)
+
+# Frequency vector for the DFT result
+n = len(signal)
+freqs = np.fft.fftfreq(n, d=1/fs)
+
+# Perform IDFT to reconstruct the signal
+idft_result = np.fft.ifft(dft_result)
+
+# Plotting the results
+plt.figure(figsize=(12, 10))
+
+# Original Signal
+plt.subplot(3, 1, 1)
+plt.plot(t, signal, label="Original Signal")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.title("Original Signal (Time Domain)")
+plt.grid()
+plt.legend()
+
+# Magnitude Spectrum (DFT result)
+plt.subplot(3, 1, 2)
+plt.stem(freqs[:n//2], np.abs(dft_result)[:n//2], basefmt=" ")
+plt.xlabel("Frequency [Hz]")
+plt.ylabel("Magnitude")
+plt.title("DFT (Frequency Domain)")
+plt.grid()
+
+# Reconstructed Signal from IDFT
+plt.subplot(3, 1, 3)
+plt.plot(t, idft_result.real, label="Reconstructed Signal", color="orange")
+plt.xlabel("Time [s]")
+plt.ylabel("Amplitude")
+plt.title("Reconstructed Signal (Time Domain)")
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
