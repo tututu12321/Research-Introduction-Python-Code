@@ -1,0 +1,81 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import odeint
+
+# パラメータの定義
+R = 3
+L = 1
+C = 1
+M = np.array([[-R / L, -1 / L], [1 / C, 0]])
+
+# ベクトル場の作図
+def plot_vector_field():
+    # -1 <= (i, v) <= 1 の範囲でメッシュグリッドを作成
+    i_x = np.linspace(-1, 1, 11)
+    v_y = np.linspace(-1, 1, 11)
+    x, y = np.meshgrid(i_x, v_y)
+
+    # ベクトル場の計算
+    u = M[0, 0] * x + M[0, 1] * y
+    v = M[1, 0] * x + M[1, 1] * y
+
+    # quiverでベクトル場を描画
+    plt.quiver(x, y, u, v)
+    plt.xlim([-1.2, 1.2])
+    plt.ylim([-1.2, 1.2])
+    plt.xlabel("I")
+    plt.ylabel("V")
+    plt.title("Vector Field")
+
+# 微分方程式の定義
+def dX_dt(X, t):
+    return M @ X
+
+# 微分方程式の数値解を求める
+def plot_numerical_solution():
+    # 初期条件
+    X0 = [0.8, 0.8]
+    # 時間の定義
+    t = np.linspace(0, 10, 101)
+    # 数値解を求める
+    sol = odeint(dX_dt, X0, t)
+
+    # 解のプロット
+    plt.plot(sol[:, 0], sol[:, 1], "-rx", label="Numerical Solution")
+    plt.xlabel("I")
+    plt.ylabel("V")
+    plt.title("Numerical Solution with Vector Field")
+    plt.legend()
+    plt.grid(True)
+
+# 固有値と固有ベクトルの計算と描画
+def plot_eigenvectors():
+    # 固有値と固有ベクトルを計算
+    eigenvalues, eigenvectors = np.linalg.eig(M)
+
+    # 固有ベクトルの正規化と描画
+    k1 = eigenvectors[:, 0] * (2 / np.linalg.norm(eigenvectors[:, 0]))
+    k2 = eigenvectors[:, 1] * (2 / np.linalg.norm(eigenvectors[:, 1]))
+
+    # 固有ベクトルの描画
+    plt.plot([k1[0], -k1[0]], [k1[1], -k1[1]], "g-", label="Eigenvector k1")
+    plt.plot([k2[0], -k2[0]], [k2[1], -k2[1]], "g--", label="Eigenvector k2")
+    plt.xlabel("I")
+    plt.ylabel("V")
+    plt.title("Eigenvectors with Numerical Solution")
+    plt.legend()
+    plt.grid(True)
+
+# 描画の実行
+plt.figure(figsize=(12, 6))
+
+# ベクトル場の描画
+plt.subplot(1, 2, 1)
+plot_vector_field()
+
+# 数値解と固有ベクトルの描画
+plt.subplot(1, 2, 2)
+plot_numerical_solution()
+plot_eigenvectors()
+
+plt.show()
