@@ -1,0 +1,118 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import signal
+
+# 3.1 直流利得
+def calculate_dc_gain(frequency, gain):
+    return gain[frequency == 0.1]
+
+# 3.2 位相余裕
+def calculate_phase_margin(frequency, phase):
+    min_phase_margin = min(180 + phase[(frequency >= 0.1) & (frequency <= 1e6)])
+    return min_phase_margin
+
+# 3.3 帯域幅（-3dB周波数）
+def calculate_bandwidth(frequency, magnitude):
+    baseline = magnitude[frequency == 0.1]
+    bandwidth = frequency[np.where(magnitude <= baseline - 3)[0][0]]
+    return bandwidth
+
+# 3.4 出力オフセット電圧
+def calculate_output_offset_voltage(output_voltage):
+    return output_voltage
+
+# 3.5 入力電圧範囲
+def calculate_input_voltage_range(Vin, Vout, V_theoretical):
+    positive_Vin = Vin[np.where(np.abs((Vout - V_theoretical) / V_theoretical) <= 0.05)[0]]
+    negative_Vin = Vin[np.where(np.abs((Vout + V_theoretical) / V_theoretical) <= 0.05)[0]]
+    input_range = min(np.min(np.abs(positive_Vin)), np.min(np.abs(negative_Vin)))
+    return input_range
+
+# 3.6 スルーレート
+def calculate_slew_rate(t, Vout, target_V):
+    t1 = t[np.where(Vout >= target_V[0])[0][0]]
+    t2 = t[np.where(Vout >= target_V[1])[0][0]]
+    slew_rate = 1.8 / (t2 - t1)
+    return slew_rate
+
+# 3.7 全高調波歪 (THD)
+def calculate_thd(Vin, Vout):
+    f = 1000  # Hz
+    t = np.linspace(0, 1/f, 1000)
+    Vout_interp = np.interp(t, np.linspace(0, 1/f, len(Vout)), Vout)
+    Vout_sin = np.sin(2 * np.pi * f * t)
+    thd = np.sum(np.square(Vout_interp - Vout_sin)) / np.sum(np.square(Vout_sin))
+    return thd, t, Vout_interp, Vout_sin
+
+# 3.8 占有面積
+def calculate_area(transistor_W, transistor_L, capacitor_value, resistor_value):
+    transistor_area = transistor_W * (transistor_L + 2)
+    capacitor_area = capacitor_value / 3e-15
+    resistor_area = resistor_value * 4
+    return transistor_area + capacitor_area + resistor_area
+
+# ======= テストデータ生成 =======
+frequency = np.array([0.1, 1, 10, 100, 1000, 10000])
+gain = np.array([45, 44, 43, 40, 35, 20])
+phase = np.array([170, 160, 150, 120, 80, 10])
+magnitude = gain
+output_voltage = 0.01
+Vin = np.linspace(-1, 1, 100)
+Vout = Vin * -10
+V_theoretical = -10
+t = np.linspace(0, 1, 1000)
+Vout_slew = np.linspace(-1, 1, 1000)
+
+# ======= 各評価の計算 =======
+dc_gain = calculate_dc_gain(frequency, gain)
+phase_margin = calculate_phase_margin(frequency, phase)
+bandwidth = calculate_bandwidth(frequency, magnitude)
+output_offset_voltage = calculate_output_offset_voltage(output_voltage)
+input_voltage_range = calculate_input_voltage_range(Vin, Vout, V_theoretical)
+slew_rate = calculate_slew_rate(t, Vout_slew, [0.9, -0.9])
+thd, t_thd, Vout_interp, Vout_sin = calculate_thd(Vin, Vout)
+area = calculate_area(10, 2, 1e-12, 1000)
+
+# ======= 結果表示 =======
+print("DC Gain:", dc_gain)
+print("Phase Margin:", phase_margin)
+print("Bandwidth:", bandwidth)
+print("Output Offset Voltage:", output_offset_voltage)
+print("Input Voltage Range:", input_voltage_range)
+print("Slew Rate:", slew_rate)
+print("Total Harmonic Distortion (THD):", thd)
+print("Occupied Area:", area)
+
+# ======= プロット =======
+plt.figure(figsize=(12, 10))
+
+# Bode Plot - Magnitude
+plt.subplot(3, 1, 1)
+plt.plot(frequency, magnitude, label='Magnitude (dB)', color='b')
+plt.xscale('log')
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Magnitude (dB)')
+plt.title('Bode Plot - Magnitude')
+plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+# Bode Plot - Phase
+plt.subplot(3, 1, 2)
+plt.plot(frequency, phase, label='Phase (deg)', color='r')
+plt.xscale('log')
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Phase (deg)')
+plt.title('Bode Plot - Phase')
+plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+# THD Waveform Comparison
+plt.subplot(3, 1, 3)
+plt.plot(t_thd, Vout_interp, label='Vout (simulated)', color='blue')
+plt.plot(t_thd, Vout_sin, label='Ideal Sine Wave', color='green', linestyle='--')
+plt.xlabel('Time (s)')
+plt.ylabel('Voltage (V)')
+plt.title('THD Comparison - Simulated vs Ideal')
+plt.legend()
+plt.grid(True)
+
+plt.tight_layout()
+plt.show()
