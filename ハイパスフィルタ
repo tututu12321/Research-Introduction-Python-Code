@@ -1,0 +1,42 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 定数設定
+R = 1000  # 抵抗 R (オーム)
+C = 1e-6  # キャパシタンス C (ファラド)
+omega_c = 1 / (R * C)  # 遮断周波数 ωc
+
+# 周波数範囲を設定
+frequencies = np.logspace(0, 6, 1000)  # 1Hzから1MHzまでの範囲
+omega = 2 * np.pi * frequencies  # 角周波数 ω = 2πf
+
+# 伝達関数 G(jω) の計算
+G = (1j * omega * R * C) / (1 + 1j * omega * R * C)
+
+# ゲイン |G(ω)| = r(ω) と位相 θ(ω) = ∠G(ω) の計算
+gain = 20 * np.log10(np.abs(G))  # デシベルに変換
+phase = np.angle(G, deg=True)    # 位相を度に変換
+
+# プロット作成
+plt.figure(figsize=(12, 8))
+
+# ゲインプロット
+plt.subplot(2, 1, 1)
+plt.plot(frequencies, gain, color='blue')
+plt.xscale('log')
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Magnitude (dB)')
+plt.title('Bode Plot - Magnitude')
+plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+# 位相プロット
+plt.subplot(2, 1, 2)
+plt.plot(frequencies, phase, color='red')
+plt.xscale('log')
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Phase (degrees)')
+plt.title('Bode Plot - Phase')
+plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+plt.tight_layout()
+plt.show()
