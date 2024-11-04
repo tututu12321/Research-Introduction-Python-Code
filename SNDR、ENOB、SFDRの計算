@@ -1,0 +1,65 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.fft import fft
+from scipy.signal import find_peaks
+
+# シミュレーション条件
+Fin = 50                 # 入力周波数 [Hz]
+Fs = 1e3                 # サンプリング周波数 [Hz]
+offset_voltage = 0.0     # オフセット電圧 [V]
+input_amplitude = 10.0   # 入力振幅 [V] (10Vに設定)
+N = 1024                 # 点数
+t = np.arange(N) / Fs    # 時間軸
+
+# サイン波信号の生成（ノイズあり）
+signal = offset_voltage + input_amplitude * np.sin(2 * np.pi * Fin * t)
+noise = 0.5 * np.random.normal(0, 1, N)  # 標準偏差0.5のホワイトノイズ
+noisy_signal = signal + noise
+
+# FFTの計算とパワースペクトルの取得
+signal_fft = fft(noisy_signal)
+power_spectrum = 20 * np.log10(np.abs(signal_fft[:N // 2]) / N)
+
+# SNDR、ENOB、SFDRの計算
+signal_power = np.max(power_spectrum)  # 信号成分のパワー（最大ピーク）
+noise_floor = power_spectrum - signal_power  # ノイズフロア
+
+# SNDRの計算
+noise_power = 10 * np.log10(np.sum(10 ** (noise_floor / 10)))
+SNDR = signal_power - noise_power
+
+# ENOBの計算
+ENOB = (SNDR - 1.76) / 6.02
+
+# SFDRの計算
+peaks, _ = find_peaks(power_spectrum)
+if len(peaks) > 1:
+    spurious_power = np.max(power_spectrum[peaks][1:])  # 信号ピーク以外の最大ピーク
+else:
+    spurious_power = -np.inf  # ピークが1つしかない場合は-SFDRは無限大に設定
+SFDR = signal_power - spurious_power
+
+# プロット
+fig, axs = plt.subplots(1, 2, figsize=(14, 6))
+
+# 時間領域のプロット
+axs[0].plot(t, noisy_signal, label="Noisy Signal")
+axs[0].plot(t, signal, label="Original Signal", linestyle='dashed')
+axs[0].set_title("Noisy Signal vs Original Signal")
+axs[0].set_xlabel("Time [sec]")
+axs[0].set_ylabel("Amplitude")
+axs[0].legend()
+
+# パワースペクトルのプロット
+freqs = np.linspace(0, Fs / 2, N // 2)
+axs[1].plot(freqs / Fs, power_spectrum)
+axs[1].set_title("Power Spectrum")
+axs[1].set_xlabel("f/fs")
+axs[1].set_ylabel("Power [dB]")
+
+# SNDR, ENOB, SFDRの表示
+textstr = f"SNDR = {SNDR:.2f} dB\nENOB = {ENOB:.2f} bit\nSFDR = {SFDR:.2f} dB"
+axs[1].text(0.6, 0.7, textstr, transform=axs[1].transAxes, fontsize=12, bbox=dict(facecolor='white', alpha=0.8))
+
+plt.tight_layout()
+plt.show()
