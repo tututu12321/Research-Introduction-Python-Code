@@ -1,0 +1,39 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 定数設定
+a_prime = 0.1  # ガウシアンの幅に関わるパラメータ（a'）
+f0 = 2e14  # 中心振動数（Hz、例として2e14 Hzに設定）
+omega0 = 2 * np.pi * f0  # 中心の角振動数
+
+# 周波数範囲の設定
+frequencies = np.linspace(f0 - 5e13, f0 + 5e13, 1000)  # 中心振動数f0を中心に幅1e13 Hzの範囲
+spectrum_amplitude = np.exp(-a_prime * (frequencies - f0) ** 2)  # 周波数スペクトルの振幅（ガウシアン）
+
+# 時間範囲の設定
+t = np.linspace(-1e-13, 1e-13, 1000)  # 時間軸（秒単位での設定）
+pulse_intensity = np.exp(-(2 * np.pi ** 2 * t ** 2) / a_prime) * np.sin(omega0 * t) ** 2  # 時間領域の光パルス
+
+# グラフのプロット
+plt.figure(figsize=(12, 6))
+
+# 周波数軸上のスペクトル（ガウシアン）
+plt.subplot(1, 2, 1)
+plt.plot(frequencies, spectrum_amplitude ** 2, label=r"$\tilde{I}(f) \propto e^{-2a' (f - f_0)^2}$")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Amplitude")
+plt.title("Frequency Domain Spectrum (Gaussian)")
+plt.grid()
+plt.legend()
+
+# 時間軸上の光パルス
+plt.subplot(1, 2, 2)
+plt.plot(t, pulse_intensity, label=r"$I(t) \propto e^{-(2 \pi^2 t^2 / a')} \sin^2(\omega_0 t)$")
+plt.xlabel("Time (s)")
+plt.ylabel("Intensity")
+plt.title("Time Domain Pulse (Gaussian Envelope)")
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
