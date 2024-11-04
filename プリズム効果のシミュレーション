@@ -1,0 +1,55 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 波長範囲（380nm～750nmの可視光範囲）
+wavelengths = np.linspace(380, 750, 1000)
+
+# 光強度の生成（ガウス分布を使用して青、緑、赤の中心波長を模擬）
+def gaussian(wavelength, center, width):
+    return np.exp(-0.5 * ((wavelength - center) / width) ** 2)
+
+# 中心波長と分布幅の設定
+blue_center, green_center, red_center = 450, 550, 650
+width = 20
+
+# 各色の強度分布
+intensity_blue = gaussian(wavelengths, blue_center, width)
+intensity_green = gaussian(wavelengths, green_center, width)
+intensity_red = gaussian(wavelengths, red_center, width)
+
+# プリズム効果のシミュレーション
+def prism_effect(wavelength, dispersion_factor=500):
+    return dispersion_factor / wavelength
+
+# 各波長での屈折角度の計算
+angles_blue = prism_effect(wavelengths)
+angles_green = prism_effect(wavelengths)
+angles_red = prism_effect(wavelengths)
+
+# プロットの設定
+plt.figure(figsize=(12, 6))
+
+# 光強度のプロット
+plt.subplot(2, 1, 1)
+plt.plot(wavelengths, intensity_blue, color='blue', label='Blue Intensity')
+plt.plot(wavelengths, intensity_green, color='green', label='Green Intensity')
+plt.plot(wavelengths, intensity_red, color='red', label='Red Intensity')
+plt.title('Light Intensity Distribution')
+plt.xlabel('Wavelength (nm)')
+plt.ylabel('Intensity')
+plt.legend()
+plt.grid(True)
+
+# 屈折角度のプロット
+plt.subplot(2, 1, 2)
+plt.plot(wavelengths, angles_blue, color='blue', label='Refraction (Blue)')
+plt.plot(wavelengths, angles_green, color='green', label='Refraction (Green)')
+plt.plot(wavelengths, angles_red, color='red', label='Refraction (Red)')
+plt.title('Prism Refraction Effect by Wavelength')
+plt.xlabel('Wavelength (nm)')
+plt.ylabel('Refraction Angle')
+plt.legend()
+plt.grid(True)
+
+plt.tight_layout()
+plt.show()
