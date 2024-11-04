@@ -1,0 +1,37 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import windows, welch
+
+# パラメータの設定
+N = 1024                    # サンプル数
+M = N // 2                  # ブロックサイズ（N以下に設定）
+T = N / 100.0               # トータル時間（秒）
+f_in = 5.0                  # 入力信号の周波数 (Hz)
+f_s = 100.0                 # サンプリング周波数 (Hz)
+
+# 時間軸と信号の生成
+t = np.linspace(0, T, N, endpoint=False)
+signal = np.sin(2 * np.pi * f_in * t)
+
+# ウィンドウ関数（ハミング窓）の設定。長さをMと一致させる。
+window = windows.hamming(M)
+
+# ゼロパディングの設定（FFTサイズを2のべき乗に）
+fft_size = 2**int(np.ceil(np.log2(N)))
+
+# オーバーラップ率の設定
+overlap_ratio = 0.5
+overlap_size = int(M * overlap_ratio)
+
+# Welch法によるパワースペクトル密度の計算
+frequencies, power_spectrum = welch(signal, fs=f_s, window=window, nperseg=M,
+                                    noverlap=overlap_size, nfft=fft_size, detrend='constant')
+
+# パワースペクトルのプロット
+plt.figure(figsize=(10, 6))
+plt.semilogy(frequencies, power_spectrum)
+plt.title("Power Spectrum")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Power Spectrum Density")
+plt.grid()
+plt.show()
