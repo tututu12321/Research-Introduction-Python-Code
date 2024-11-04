@@ -1,0 +1,26 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 定数の設定
+h0 = 1.0    # 初期高さ
+a = 1.0     # 拡散係数
+
+# x と t の範囲を設定
+x = np.linspace(-10, 10, 500)
+t_values = [0.1, 0.5, 1.0, 2.0, 3.0]  # 時間のリスト
+
+# プロットの作成
+plt.figure(figsize=(10, 6))
+
+for t in t_values:
+    # h(x, t) の計算
+    h = (h0 / np.sqrt(2 * np.pi * a * t)) * np.exp(-x**2 / (4 * a * t))
+    plt.plot(x, h, label=f't = {t}')
+
+# グラフの設定
+plt.title("Time Evolution of Gaussian Distribution")
+plt.xlabel("x")
+plt.ylabel("h(x, t)")
+plt.legend()
+plt.grid()
+plt.show()
