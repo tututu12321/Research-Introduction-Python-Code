@@ -1,0 +1,141 @@
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def save_fig(fig, dir_path, fig_name):
+    """matplotlibのグラフを保存する関数
+
+    Parameters
+    ----------
+    fig : matplotlib.figure.Figure
+        グラフ
+    dir_path : str
+        保存先のパス
+    fig_name : str
+        ファイル名
+    """
+    if not os.path.isdir(dir_path + "/svg"):
+        os.makedirs(dir_path + "/svg")
+    fig.savefig(dir_path + "/svg/" + fig_name + ".svg")
+    fig.savefig(dir_path + "/" + fig_name + ".png")
+
+
+def freq_search(N: int, fs: float, finRate=8):
+    """コヒーレントサンプリングに必要な入力周波数を求める関数"""
+    freq = []
+    FFT_points = 2**N
+    for n in range(2, N):
+        prime = np.exp(n * np.log(2)) - 1
+        fin_per_fs = prime / FFT_points
+        freq.append(fin_per_fs)
+    array = np.array(freq)
+    index = (np.abs(array - (1/finRate))).argmin()
+    fin = freq[index] * fs
+    return fin
+
+
+def wave_sort(data, fs: float, f_signal: float):
+    """コヒーレントサンプリングされた波形データを並び替えて１周期分の波形にする関数"""
+    data_num = len(data)
+    t_signal = 1/f_signal
+    Ts = 1/fs
+    dx_list = []
+    for n in range(data_num):
+        i = int((Ts*n)/t_signal)
+        dx_list.append((Ts*n)-(t_signal*i))
+    sorted_indices = sorted(range(len(dx_list)), key=lambda k: dx_list[k])
+    sort = [data[i] for i in sorted_indices]
+    return sort
+
+
+def ideal_adc(input_voltage, n_bits: int, v_min: float, v_max: float):
+    """理想的なADCとして働く関数"""
+    LSB = (v_max - v_min) / (2 ** n_bits)
+    digital_level = ((input_voltage - v_min) / LSB).astype(int)
+    digital_level = np.clip(digital_level, 0, 2 ** n_bits - 1)
+    return digital_level
+
+
+def sine_wave_generator(N: int, f_signal: float, fs: float, amplitude: float, offset: float):
+    """サイン波を生成する関数"""
+    t_sampling = 1/fs
+    duration = N * t_sampling
+    t = np.arange(0, duration, t_sampling)
+    signal = amplitude * np.sin(2 * np.pi * f_signal * t) + offset
+    return signal
+
+
+def AC_evaluation(bit: int, data, N: int, fs: float, f_in: float, realtime=False):
+    """ADCのAC評価を行う関数"""
+    f = np.divide(data, 2**(bit-1))
+    dt = 1/fs
+    t = np.arange(0, N*dt, dt)
+    freq = np.fft.fftfreq(N, dt)
+    freq_norm = freq/fs
+    F = np.fft.fft(f) * 2 / N
+    Power = np.abs(F)**2
+    Pow_dB = 10 * np.log10(Power / 1.0)
+    signal_index = np.argmax(Power[1:int(N/2)]) + 1
+    Signal = Power[signal_index]
+    Noise = np.sum(Power[1:int(N/2)]) - Signal
+    SNDR = 10 * np.log10(Signal / Noise)
+    ENOB = (SNDR - 1.76) / 6.02
+    spurious = []
+    for i in range(2, 5):
+        spurious.append(np.max(Pow_dB[(signal_index * i) - 2:signal_index * i + 2]))
+    SFDR = Pow_dB[signal_index] - np.max(spurious)
+
+    print("SNDR=", SNDR, "dB")
+    print("ENOB=", ENOB, "bit")
+    print("SFDR=", SFDR, "dB")
+
+    sorted_data = wave_sort(data, 1/dt, f_in)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+    ax1.plot(t, sorted_data, marker='.', markersize=5)
+    ax1.set_title("Sorted Wave")
+    ax1.set_xlabel("Time [sec]")
+    ax1.set_ylabel("Signal")
+    ax1.grid()
+    ax2.plot(freq_norm[1:int(N/2)], Pow_dB[1:int(N/2)])
+    ax2.set_title("Power Spectrum")
+    ax2.set_xlabel("f/fs")
+    ax2.set_ylabel("Power [dB]")
+    ax2.grid()
+    ax2.text(0.6, 0.7, f"SNDR = {SNDR:.2f} dB\nENOB = {ENOB:.2f} bit\nSFDR = {SFDR:.2f} dB",
+             transform=ax2.transAxes, fontsize=12, bbox=dict(facecolor='white', alpha=0.8))
+    plt.tight_layout()
+    plt.show()
+
+
+def DC_evaluation(data, n_bits: int):
+    """ADCのDC解析を行う関数"""
+    wave_hist, _ = np.histogram(data, bins=2**n_bits, range=(0, 2**n_bits))
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.plot(wave_hist)
+    ax.set_title("Histogram")
+    ax.set_xlabel("Code")
+    ax.set_ylabel("Frequency")
+    ax.grid(True)
+    plt.show()
+
+
+# 使用例
+if __name__ == '__main__':
+    # データ点数 (2^N)
+    N = 12
+    # サンプリング周波数
+    fs = 200e3
+    f_in = freq_search(N, fs, 8)
+    v_signal = sine_wave_generator(2**N, f_in, fs, 2.5, 2.5)
+    v_signal += 1e-6 * np.random.rand(2**N)
+    data = ideal_adc(v_signal, 8, 0, 5)
+    AC_evaluation(8, data, 2**N, fs, f_in)
+
+    N = 16
+    fs = 200e3
+    f_in = freq_search(N, fs, 8)
+    v_signal = sine_wave_generator(2**N, f_in, fs, 5, 5)
+    v_signal += 1e-6 * np.random.rand(2**N)
+    data = ideal_adc(v_signal, 8, 0, 10)
+    DC_evaluation(data, 8)
