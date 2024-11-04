@@ -1,0 +1,64 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import freqz
+
+def peaking_eq(f0, Q, gain_db, fs=44100):
+    """
+    Peaking EQフィルタの係数を計算する関数。
+    
+    Parameters:
+        f0 (float): 中心周波数 (Hz)
+        Q (float): Q値（バンド幅）
+        gain_db (float): ゲイン (dB)
+        fs (float): サンプリング周波数 (Hz)
+    
+    Returns:
+        b, a (ndarray): フィルタ係数
+    """
+    A = 10 ** (gain_db / 40)  # ゲインのリニアスケール変換
+    omega = 2 * np.pi * f0 / fs  # 正規化角周波数
+    alpha = np.sin(omega) / (2 * Q)
+
+    # Peaking EQのフィルタ係数の計算
+    b = [1 + alpha * A, -2 * np.cos(omega), 1 - alpha * A]
+    a = [1 + alpha / A, -2 * np.cos(omega), 1 - alpha / A]
+
+    return b, a
+
+# パラメータ設定
+f0 = 1000      # 中心周波数 (Hz)
+Q = 1.0        # Q値（バンド幅）
+gain_db = 6.0  # ゲイン (dB)
+fs = 44100     # サンプリング周波数 (Hz)
+
+# フィルタ係数を取得
+b, a = peaking_eq(f0, Q, gain_db, fs)
+
+# 周波数特性を計算
+w, h = freqz(b, a, worN=8000, fs=fs)
+gain = 20 * np.log10(abs(h))  # dBスケールに変換
+phase = np.angle(h, deg=True)  # 位相を度に変換
+
+# プロットの作成
+plt.figure(figsize=(12, 8))
+
+# ゲインプロット
+plt.subplot(2, 1, 1)
+plt.plot(w, gain, color='blue')
+plt.xscale('log')
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Magnitude (dB)')
+plt.title('EQ Filter - Magnitude Response')
+plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+# 位相プロット
+plt.subplot(2, 1, 2)
+plt.plot(w, phase, color='red')
+plt.xscale('log')
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Phase (degrees)')
+plt.title('EQ Filter - Phase Response')
+plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+plt.tight_layout()
+plt.show()
