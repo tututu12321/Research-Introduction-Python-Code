@@ -1,0 +1,53 @@
+# 定数の設定
+A0_dB = 80            # OPアンプの直流ゲイン (dB)
+A0 = 10 ** (A0_dB / 20)  # ゲインをリニア値に変換
+f_cutoff = 2e3        # 遮断周波数 (2kHz)
+f_T = 20e6            # 利得帯域積 (GBP)
+
+# (a) 利得帯域積の計算
+GBP = A0 * f_cutoff
+print("(a) 利得帯域積 (GBP):", GBP / 1e6, "MHz")  # 単位をMHzに変換
+
+# (b) 非反転増幅回路の利得帯域幅
+# 4倍増幅 (12dB) の場合
+G0_4_dB = 12
+G0_4 = 10 ** (G0_4_dB / 20)
+GBP_4_noninv = GBP / G0_4
+print("(b) 非反転増幅回路 (4倍, 12dB) の帯域幅:", GBP_4_noninv / 1e6, "MHz")
+
+# 40倍増幅 (32dB) の場合
+G0_40_dB = 32
+G0_40 = 10 ** (G0_40_dB / 20)
+GBP_40_noninv = GBP / G0_40
+print("(b) 非反転増幅回路 (40倍, 32dB) の帯域幅:", GBP_40_noninv / 1e6, "MHz")
+
+# 反転増幅回路の利得帯域積
+# 4倍増幅 (12dB) の場合
+alpha_4 = 1 / (1 + G0_4)
+GBP_4_inv = alpha_4 * f_T
+print("(b) 反転増幅回路 (4倍) の帯域幅:", GBP_4_inv / 1e6, "MHz")
+
+# 40倍増幅 (32dB) の場合
+alpha_40 = 1 / (1 + G0_40)
+GBP_40_inv = alpha_40 * f_T
+print("(b) 反転増幅回路 (40倍) の帯域幅:", GBP_40_inv / 1e6, "MHz")
+
+# (c) 非反転増幅回路の周波数帯域幅
+# 4倍増幅 (12dB) の場合
+f_b4_noninv = GBP / G0_4
+print("(c) 非反転増幅回路 (4倍) の周波数帯域幅:", f_b4_noninv / 1e6, "MHz")
+
+# 40倍増幅 (32dB) の場合
+f_b40_noninv = GBP / G0_40
+print("(c) 非反転増幅回路 (40倍) の周波数帯域幅:", f_b40_noninv / 1e3, "kHz")
+
+# 反転増幅回路の周波数帯域幅
+# 4倍増幅 (12dB) の場合
+G0b_4f_inv = G0_4 * f_T
+f_b4_inv = GBP / G0b_4f_inv
+print("(c) 反転増幅回路 (4倍) の周波数帯域幅:", f_b4_inv / 1e6, "MHz")
+
+# 40倍増幅 (32dB) の場合
+G0b_40f_inv = G0_40 * f_T
+f_b40_inv = GBP / G0b_40f_inv
+print("(c) 反転増幅回路 (40倍) の周波数帯域幅:", f_b40_inv / 1e3, "kHz")
