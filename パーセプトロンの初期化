@@ -1,0 +1,60 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# --- パーセプトロンの仕組み ---
+class PerceptronSigmoid:
+    def __init__(self, input_size):
+        """
+        パーセプトロンの初期化。
+        - input_size: 入力信号の数
+        """
+        self.weights = np.random.rand(input_size)  # ランダムな重み
+        self.bias = np.random.rand()  # ランダムなバイアス
+
+    def activation_function(self, x):
+        """
+        シグモイド関数（活性化関数）
+        - x: 入力値
+        """
+        return 1 / (1 + np.exp(-x))
+
+    def forward(self, inputs):
+        """
+        パーセプトロンの順伝播計算。
+        - inputs: 入力信号
+        """
+        # 重み付け、総和、バイアス加算
+        weighted_sum = np.dot(self.weights, inputs) + self.bias
+        # 活性化関数の適用
+        output = self.activation_function(weighted_sum)
+        return weighted_sum, output
+
+# --- パーセプトロンの初期化 ---
+input_size = 2  # 入力信号の数
+perceptron = PerceptronSigmoid(input_size)
+
+# --- サンプルデータ ---
+inputs = np.array([0.5, -0.2])  # 入力信号
+weighted_sum, output = perceptron.forward(inputs)
+
+# --- 結果の表示 ---
+print("Inputs:", inputs)
+print("Weights:", perceptron.weights)
+print("Bias:", perceptron.bias)
+print("Weighted Sum (Σ):", weighted_sum)
+print("Output (Activation):", output)
+
+# --- 活性化関数のプロット ---
+x = np.linspace(-10, 10, 100)
+y = 1 / (1 + np.exp(-x))  # シグモイド関数
+
+plt.figure(figsize=(10, 6))
+plt.plot(x, y, label="Sigmoid Function", color="blue")
+plt.scatter(weighted_sum, output, color="red", label=f"Input Point (Σ={weighted_sum:.2f}, Output={output:.2f})")
+plt.title("Sigmoid Activation Function")
+plt.xlabel("Weighted Sum (Σ)")
+plt.ylabel("Activation Output")
+plt.axhline(0.5, color="green", linestyle="--", label="Threshold")
+plt.grid(True)
+plt.legend()
+plt.show()
