@@ -1,0 +1,91 @@
+import tensorflow as tf
+from tensorflow.keras.layers import Dense, Embedding, MultiHeadAttention, LayerNormalization, Input, LeakyReLU, Reshape, Flatten
+from tensorflow.keras.models import Model, Sequential
+import numpy as np
+
+# --- 1. Transformer: 自然言語処理 ---
+
+# Transformerエンコーダ層
+def transformer_encoder(inputs, num_heads=2, key_dim=64, ff_dim=128):
+    # 自注意メカニズム
+    attention_output = MultiHeadAttention(num_heads=num_heads, key_dim=key_dim)(inputs, inputs)
+    attention_output = LayerNormalization()(inputs + attention_output)  # 残差接続と正規化
+
+    # フィードフォワードネットワーク
+    ff_output = Dense(ff_dim, activation="relu")(attention_output)
+    ff_output = Dense(inputs.shape[-1])(ff_output)
+    encoder_output = LayerNormalization()(attention_output + ff_output)  # 残差接続と正規化
+
+    return encoder_output
+
+# Transformerモデル構築
+def build_transformer(input_shape=(20, 64)):
+    input_layer = Input(shape=input_shape)  # 20トークン、64次元埋め込み
+    encoder_output = transformer_encoder(input_layer)
+    model = Model(inputs=input_layer, outputs=encoder_output)
+    return model
+
+transformer_model = build_transformer()
+transformer_model.summary()
+
+# Transformerダミーデータの処理
+dummy_input = tf.random.uniform((5, 20, 64))  # 5サンプル、20トークン、64次元
+transformer_output = transformer_model(dummy_input)
+print("Transformer Output Shape:", transformer_output.shape)
+
+# --- 2. GAN: 画像生成 ---
+
+# ジェネレータ
+def build_generator(latent_dim=100):
+    model = Sequential([
+        Dense(128, activation="relu", input_dim=latent_dim),
+        LeakyReLU(0.2),
+        Dense(256, activation="relu"),
+        LeakyReLU(0.2),
+        Dense(784, activation="tanh"),  # MNIST画像サイズ
+        Reshape((28, 28))  # 28x28の画像に変形
+    ])
+    return model
+
+# ディスクリミネータ
+def build_discriminator():
+    model = Sequential([
+        Flatten(input_shape=(28, 28)),
+        Dense(256, activation="relu"),
+        LeakyReLU(0.2),
+        Dense(128, activation="relu"),
+        LeakyReLU(0.2),
+        Dense(1, activation="sigmoid")  # 真偽判定
+    ])
+    return model
+
+# GAN構築
+latent_dim = 100
+generator = build_generator(latent_dim)
+discriminator = build_discriminator()
+discriminator.compile(optimizer="adam", loss="binary_crossentropy")
+
+# GAN結合
+gan = Sequential([generator, discriminator])
+gan.compile(optimizer="adam", loss="binary_crossentropy")
+
+# GANモデルの概要
+generator.summary()
+discriminator.summary()
+gan.summary()
+
+# GANトレーニング用ダミーデータ
+latent_vectors = np.random.normal(0, 1, (5, latent_dim))  # ランダムノイズ
+generated_images = generator.predict(latent_vectors)  # 生成画像
+print("Generated Image Shape:", generated_images.shape)
+
+# 表示用画像のプロット
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(10, 2))
+for i in range(5):
+    plt.subplot(1, 5, i + 1)
+    plt.imshow(generated_images[i], cmap='gray')
+    plt.axis('off')
+plt.suptitle("Generated Images (GAN)")
+plt.show()
