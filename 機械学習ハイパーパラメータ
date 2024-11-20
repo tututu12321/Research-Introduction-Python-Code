@@ -1,0 +1,43 @@
+from sklearn.metrics import accuracy_score, mean_squared_error, r2_score
+
+# モデルのトレーニングと評価
+results = {}
+for name, model in models.items():
+    print(f"Training: {name}")
+    if name == "Linear Regression":
+        # 線形回帰の処理
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        mse = mean_squared_error(y_test, y_pred)  # 平均二乗誤差
+        r2 = r2_score(y_test, y_pred)  # 決定係数
+        results[name] = {"model": model, "mse": mse, "r2": r2}
+        print(f"Mean Squared Error: {mse:.4f}, R2 Score: {r2:.4f}")
+    elif name == "K-Means":
+        # クラスタリング用データセット作成
+        X_blob, _ = make_blobs(n_samples=500, n_features=2, centers=3, random_state=42)
+        model.fit(X_blob)  # K-Meansは教師なし学習
+        results[name] = {"model": model, "labels": model.labels_}
+    elif name == "PCA (Dimensionality Reduction)":
+        # 次元削減
+        model.fit(X_train)
+        X_reduced = model.transform(X_train)
+        results[name] = {"model": model, "reduced_data": X_reduced}
+    else:
+        # 分類器の学習
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        acc = accuracy_score(y_test, y_pred)
+        results[name] = {"model": model, "accuracy": acc}
+        print(f"Accuracy: {acc:.4f}")
+
+# 結果表示
+print("\n--- Results ---")
+for name, result in results.items():
+    if "accuracy" in result:
+        print(f"{name}: Accuracy = {result['accuracy']:.4f}")
+    elif "mse" in result:
+        print(f"{name}: MSE = {result['mse']:.4f}, R2 = {result['r2']:.4f}")
+    elif "labels" in result:
+        print(f"{name}: Cluster Centers = {result['model'].cluster_centers_}")
+    elif "reduced_data" in result:
+        print(f"{name}: Reduced Dimensions = {result['reduced_data'].shape}")
