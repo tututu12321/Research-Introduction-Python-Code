@@ -1,0 +1,56 @@
+from gensim.models import Word2Vec
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+
+# 1. データの準備
+sentences = [
+    ["Japan", "Tokyo"],
+    ["Spain", "Madrid"],
+    ["Russia", "Moscow"],
+    ["France", "Paris"],
+    ["Germany", "Berlin"],
+    ["Tokyo", "is", "the", "capital", "of", "Japan"],
+    ["Madrid", "is", "the", "capital", "of", "Spain"],
+    ["Moscow", "is", "the", "capital", "of", "Russia"],
+    ["Paris", "is", "the", "capital", "of", "France"],
+    ["Berlin", "is", "the", "capital", "of", "Germany"],
+]
+
+# 2. Word2Vecモデルの学習
+model = Word2Vec(sentences, vector_size=10, window=3, min_count=1, workers=4, sg=0)
+
+# 3. ベクトル化された単語の表示
+print("=== 単語のベクトル表現 ===")
+for word in ["Japan", "Tokyo", "Spain", "Madrid", "Russia", "Moscow"]:
+    print(f"{word}: {model.wv[word]}")
+
+# 4. 単語間の類似度計算
+print("\n=== 単語間の類似度 ===")
+print(f"Similarity (Japan - Tokyo): {model.wv.similarity('Japan', 'Tokyo'):.4f}")
+print(f"Similarity (Japan - Madrid): {model.wv.similarity('Japan', 'Madrid'):.4f}")
+
+# 5. ベクトル演算 (例: Japan + Madrid - Tokyo ≈ Spain)
+print("\n=== ベクトル演算 (例: Japan + Madrid - Tokyo ≈ ?) ===")
+result = model.wv.most_similar(positive=['Japan', 'Madrid'], negative=['Tokyo'])
+for word, similarity in result:
+    print(f"{word}: {similarity:.4f}")
+
+# 6. ベクトルの可視化 (PCAを使用して2次元に圧縮)
+print("\n=== 単語ベクトルの可視化 ===")
+words = ["Japan", "Tokyo", "Spain", "Madrid", "Russia", "Moscow", "France", "Paris", "Germany", "Berlin"]
+vectors = [model.wv[word] for word in words]
+
+# PCAで次元削減
+pca = PCA(n_components=2)
+reduced_vectors = pca.fit_transform(vectors)
+
+# 可視化
+plt.figure(figsize=(10, 8))
+for word, vector in zip(words, reduced_vectors):
+    plt.scatter(vector[0], vector[1])
+    plt.text(vector[0] + 0.02, vector[1] + 0.02, word, fontsize=12)
+plt.title("Word Embeddings Visualized with PCA")
+plt.xlabel("PCA Component 1")
+plt.ylabel("PCA Component 2")
+plt.grid()
+plt.show()
