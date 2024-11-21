@@ -1,0 +1,152 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ステップ 1: ランプ波の生成
+def generate_ramp_wave(start=0, stop=10, num_points=1000, noise_amplitude=0):
+    """
+    ランプ波とノイズ付きランプ波を生成
+    start: 開始値
+    stop: 終了値
+    num_points: データポイント数
+    noise_amplitude: ノイズの振幅
+    """
+    t = np.linspace(start, stop, num_points)  # 時間軸
+    ramp_wave = t  # ランプ波 (線形増加)
+    noise = noise_amplitude * np.random.normal(size=num_points)  # ノイズ
+    noisy_ramp_wave = ramp_wave + noise
+    return t, ramp_wave, noisy_ramp_wave
+
+# ステップ 2: AD変換
+def adc_convert(signal, levels=16):
+    """
+    AD変換 (量子化)
+    signal: 入力信号
+    levels: 量子化レベル
+    """
+    min_val, max_val = np.min(signal), np.max(signal)
+    step = (max_val - min_val) / levels
+    quantized_signal = np.round((signal - min_val) / step) * step + min_val
+    return quantized_signal
+
+# ステップ 3: 数値的微分
+def numerical_derivative(signal, sampling_rate):
+    """
+    信号の数値的微分を計算
+    signal: 入力信号
+    sampling_rate: サンプリングレート [Hz]
+    """
+    dt = 1 / sampling_rate
+    derivative = np.diff(signal) / dt
+    return derivative
+
+# ステップ 4: プロット
+def plot_separately_with_additional(t, ramp_wave, noisy_ramp_wave, adc_ramp_wave, adc_clean_ramp_wave, sampling_rate):
+    """
+    ランプ波、ノイズ付きランプ波、AD変換された波形と、それぞれの微分を別々にプロット
+    """
+    # 微分計算
+    ramp_derivative = numerical_derivative(ramp_wave, sampling_rate)
+    noisy_derivative = numerical_derivative(noisy_ramp_wave, sampling_rate)
+    adc_derivative = numerical_derivative(adc_ramp_wave, sampling_rate)
+    adc_clean_derivative = numerical_derivative(adc_clean_ramp_wave, sampling_rate)
+
+    # 時間軸（微分後は1つデータポイントが減る）
+    t_derivative = t[:-1]
+
+    # プロット: オリジナルのランプ波
+    plt.figure(figsize=(10, 6))
+    plt.plot(t, ramp_wave, label="Ramp Wave (Original)", color="blue")
+    plt.title("Original Ramp Wave")
+    plt.xlabel("Time")
+    plt.ylabel("Amplitude")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    # プロット: ノイズ付きランプ波
+    plt.figure(figsize=(10, 6))
+    plt.plot(t, noisy_ramp_wave, label="Noisy Ramp Wave", color="orange")
+    plt.title("Noisy Ramp Wave")
+    plt.xlabel("Time")
+    plt.ylabel("Amplitude")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    # プロット: ノイズありランプ波のAD変換
+    plt.figure(figsize=(10, 6))
+    plt.plot(t, adc_ramp_wave, label="ADC Converted Noisy Ramp Wave", color="green")
+    plt.title("ADC Converted Noisy Ramp Wave")
+    plt.xlabel("Time")
+    plt.ylabel("Amplitude")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    # プロット: ノイズなしランプ波のAD変換
+    plt.figure(figsize=(10, 6))
+    plt.plot(t, adc_clean_ramp_wave, label="ADC Converted Clean Ramp Wave", color="purple")
+    plt.title("ADC Converted Clean Ramp Wave")
+    plt.xlabel("Time")
+    plt.ylabel("Amplitude")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    # プロット: オリジナルのランプ波の微分
+    plt.figure(figsize=(10, 6))
+    plt.plot(t_derivative, ramp_derivative, label="Derivative of Ramp Wave", color="blue")
+    plt.title("Derivative of Original Ramp Wave")
+    plt.xlabel("Time")
+    plt.ylabel("Derivative")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    # プロット: ノイズ付きランプ波の微分
+    plt.figure(figsize=(10, 6))
+    plt.plot(t_derivative, noisy_derivative, label="Derivative of Noisy Ramp Wave", color="orange")
+    plt.title("Derivative of Noisy Ramp Wave")
+    plt.xlabel("Time")
+    plt.ylabel("Derivative")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    # プロット: ノイズありランプ波のAD変換の微分
+    plt.figure(figsize=(10, 6))
+    plt.plot(t_derivative, adc_derivative, label="Derivative of ADC Noisy Ramp Wave", color="green")
+    plt.title("Derivative of ADC Converted Noisy Ramp Wave")
+    plt.xlabel("Time")
+    plt.ylabel("Derivative")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    # プロット: ノイズなしランプ波のAD変換の微分
+    plt.figure(figsize=(10, 6))
+    plt.plot(t_derivative, adc_clean_derivative, label="Derivative of ADC Clean Ramp Wave", color="purple")
+    plt.title("Derivative of ADC Converted Clean Ramp Wave")
+    plt.xlabel("Time")
+    plt.ylabel("Derivative")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+# パラメータ設定
+start = 0                # ランプ波の開始値
+stop = 10                # ランプ波の終了値
+num_points = 1000        # サンプリングポイント数
+sampling_rate = 1000     # サンプリングレート [Hz]
+noise_amplitude = 0.5    # ノイズ振幅
+adc_levels = 16          # AD変換の量子化レベル
+
+# ランプ波の生成
+t, ramp_wave, noisy_ramp_wave = generate_ramp_wave(start, stop, num_points, noise_amplitude)
+
+# AD変換
+adc_ramp_wave = adc_convert(noisy_ramp_wave, levels=adc_levels)
+adc_clean_ramp_wave = adc_convert(ramp_wave, levels=adc_levels)
+
+# プロット実行
+plot_separately_with_additional(t, ramp_wave, noisy_ramp_wave, adc_ramp_wave, adc_clean_ramp_wave, sampling_rate)
