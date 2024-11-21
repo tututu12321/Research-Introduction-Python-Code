@@ -1,0 +1,22 @@
+import numpy as np
+
+# Define the complex number components
+x = 3  # Real part
+y = 4  # Imaginary part
+
+# Calculate magnitude
+magnitude = np.sqrt(x**2 + y**2)
+
+# Calculate argument (angle)
+angle = np.arctan2(y, x)  # Returns the angle in radians
+
+# Convert to polar form
+polar_form = f"{magnitude:.2f} (cos({angle:.2f}) + i sin({angle:.2f}))"
+
+# Convert to exponential form
+exponential_form = f"{magnitude:.2f} e^(i {angle:.2f})"
+
+# Output results
+print(f"Magnitude: {magnitude:.2f}")
+print(f"Polar Form: {polar_form}")
+print(f"Exponential Form: {exponential_form}")
