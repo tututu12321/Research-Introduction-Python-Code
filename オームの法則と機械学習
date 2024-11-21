@@ -1,0 +1,74 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from scipy import stats
+
+# ダミーデータの生成 (オームの法則: V = I * R, R=10Ω)
+np.random.seed(42)
+I = np.random.uniform(0, 10, 100)  # 電流（A）
+R = 10  # 定数の抵抗（Ω）
+V = I * R + np.random.normal(0, 2, 100)  # 電圧（V）に少しノイズを加える
+
+# データフレームに格納
+data = pd.DataFrame({'Current (A)': I, 'Voltage (V)': V})
+
+# 外れ値を可視化
+plt.figure(figsize=(10, 6))
+plt.scatter(data['Current (A)'], data['Voltage (V)'], label='Data points')
+plt.title('Current vs Voltage with Outliers')
+plt.xlabel('Current (A)')
+plt.ylabel('Voltage (V)')
+plt.grid(True)
+plt.show()
+
+# 外れ値の検出 (Zスコアを使用)
+z_scores = np.abs(stats.zscore(data))
+threshold = 3  # Zスコアが3以上の点を外れ値として除去
+filtered_data = data[(z_scores < threshold).all(axis=1)]
+
+# 外れ値除去後のデータ可視化
+plt.figure(figsize=(10, 6))
+plt.scatter(filtered_data['Current (A)'], filtered_data['Voltage (V)'], color='orange', label='Filtered Data')
+plt.title('Current vs Voltage after Outlier Removal')
+plt.xlabel('Current (A)')
+plt.ylabel('Voltage (V)')
+plt.grid(True)
+plt.show()
+
+# 線形回帰モデルの適用（外れ値除去前と後）
+# 1. 外れ値を除去する前
+model_all = LinearRegression()
+X_all = data['Current (A)'].values.reshape(-1, 1)
+y_all = data['Voltage (V)'].values
+model_all.fit(X_all, y_all)
+y_pred_all = model_all.predict(X_all)
+
+# 2. 外れ値を除去した後
+X_filtered = filtered_data['Current (A)'].values.reshape(-1, 1)
+y_filtered = filtered_data['Voltage (V)'].values
+model_filtered = LinearRegression()
+model_filtered.fit(X_filtered, y_filtered)
+y_pred_filtered = model_filtered.predict(X_filtered)
+
+# 可視化：線形回帰の結果
+plt.figure(figsize=(10, 6))
+plt.scatter(data['Current (A)'], data['Voltage (V)'], color='blue', label='All Data')
+plt.plot(data['Current (A)'], y_pred_all, color='red', label='Linear Regression (All Data)')
+plt.scatter(filtered_data['Current (A)'], filtered_data['Voltage (V)'], color='orange', label='Filtered Data')
+plt.plot(filtered_data['Current (A)'], y_pred_filtered, color='green', label='Linear Regression (Filtered Data)')
+plt.title('Linear Regression with and without Outliers')
+plt.xlabel('Current (A)')
+plt.ylabel('Voltage (V)')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# 回帰係数の表示
+print("Linear Regression Coefficients with all data:")
+print("Slope (R):", model_all.coef_[0])
+print("Intercept:", model_all.intercept_)
+
+print("\nLinear Regression Coefficients after outlier removal:")
+print("Slope (R):", model_filtered.coef_[0])
+print("Intercept:", model_filtered.intercept_)
