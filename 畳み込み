@@ -1,0 +1,73 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import convolve
+
+# --- 1. 離散信号の畳み込み ---
+# 入力信号 x(k)
+x_discrete = np.array([0, 1, 2, 3, 4, 0, 0, 0])
+
+# フィルタのインパルス応答 h(k)
+h_discrete = np.array([1, 0.5, 0.25])
+
+# 畳み込み計算
+y_discrete = np.convolve(x_discrete, h_discrete, mode='full')
+
+# --- 2. 連続信号の畳み込み ---
+# 時間軸の設定
+t_continuous = np.linspace(-10, 10, 500)
+
+# 入力信号 x(t) とインパルス応答 h(t)
+x_continuous = np.where((t_continuous >= 0) & (t_continuous <= 5), 1, 0)  # 矩形波（0 <= t <= 5）
+h_continuous = np.exp(-t_continuous) * (t_continuous >= 0)  # 指数関数（t >= 0）
+
+# 畳み込み計算
+dt = t_continuous[1] - t_continuous[0]  # 時間ステップ幅
+y_continuous = convolve(x_continuous, h_continuous, mode='full') * dt  # 畳み込み積分
+t_conv = np.linspace(t_continuous[0] + t_continuous[0], t_continuous[-1] + t_continuous[-1], len(y_continuous))
+
+# --- プロット ---
+plt.figure(figsize=(14, 10))
+
+# 離散信号のプロット
+plt.subplot(3, 2, 1)
+plt.stem(x_discrete)
+plt.title("Discrete Input Signal x(k)")
+plt.xlabel("k")
+plt.ylabel("x(k)")
+
+plt.subplot(3, 2, 2)
+plt.stem(h_discrete)
+plt.title("Discrete Impulse Response h(k)")
+plt.xlabel("k")
+plt.ylabel("h(k)")
+
+plt.subplot(3, 2, 3)
+plt.stem(y_discrete)
+plt.title("Discrete Output Signal y(n) = x(k) * h(k)")
+plt.xlabel("n")
+plt.ylabel("y(n)")
+
+# 連続信号のプロット
+plt.subplot(3, 2, 4)
+plt.plot(t_continuous, x_continuous, label="x(t)")
+plt.title("Continuous Input Signal x(t)")
+plt.xlabel("t")
+plt.ylabel("x(t)")
+plt.grid()
+
+plt.subplot(3, 2, 5)
+plt.plot(t_continuous, h_continuous, label="h(t)", color="orange")
+plt.title("Continuous Impulse Response h(t)")
+plt.xlabel("t")
+plt.ylabel("h(t)")
+plt.grid()
+
+plt.subplot(3, 2, 6)
+plt.plot(t_conv, y_continuous, label="y(t)", color="green")
+plt.title("Continuous Output Signal y(t) = x(t) * h(t)")
+plt.xlabel("t")
+plt.ylabel("y(t)")
+plt.grid()
+
+plt.tight_layout()
+plt.show()
