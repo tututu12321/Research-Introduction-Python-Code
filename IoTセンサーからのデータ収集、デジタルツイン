@@ -1,0 +1,90 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import minimize
+
+# 仮想の温度管理システム（デジタルツインモデル）
+class DigitalTwin:
+    def __init__(self, initial_temperature=20.0, heating_efficiency=0.8):
+        self.current_temperature = initial_temperature
+        self.heating_efficiency = heating_efficiency  # ヒーター効率
+
+    def update_temperature(self, heater_power, ambient_temperature=20.0):
+        """
+        温度の更新: ヒーターのパワーと周囲の温度に基づいて温度を更新
+        """
+        temperature_change = heater_power * self.heating_efficiency + 0.1 * (ambient_temperature - self.current_temperature)
+        self.current_temperature += temperature_change
+
+    def get_current_temperature(self):
+        return self.current_temperature
+
+# IoTセンサーからのデータ収集（仮のデータ）
+def simulate_iot_data(time_steps=100):
+    """
+    IoTセンサーからのデータ収集をシミュレート
+    仮に温度が少しずつ上昇するようなデータを生成
+    """
+    time = np.linspace(0, time_steps, time_steps)
+    temperature_data = 20 + 0.05 * time + np.random.normal(0, 0.5, time_steps)  # 温度はゆっくり上昇
+    return time, temperature_data
+
+# 温度の最適化を行う関数
+def optimize_temperature(digital_twin, target_temperature=22.0):
+    """
+    最適なヒーター出力を最適化
+    """
+    def objective(heater_power):
+        digital_twin.update_temperature(heater_power)
+        return (digital_twin.get_current_temperature() - target_temperature) ** 2
+
+    # 最適化（ヒーターの出力を0から1の範囲で最適化）
+    result = minimize(objective, 0.5, bounds=[(0, 1)])
+    return result.x[0]
+
+# シミュレーションの設定
+time_steps = 100
+ambient_temperature = 20.0
+digital_twin = DigitalTwin()
+
+# IoTセンサーによるデータ収集
+time, temperature_data = simulate_iot_data(time_steps)
+
+# 温度管理システムの最適化
+optimized_temperatures = []
+heater_powers = []
+for t in range(time_steps):
+    # IoTセンサーからのデータを使ってデジタルツインを更新
+    digital_twin.update_temperature(0.5, ambient_temperature)
+    
+    # 現在の温度に基づいてヒーター出力を最適化
+    optimal_heater_power = optimize_temperature(digital_twin)
+    heater_powers.append(optimal_heater_power)
+    
+    # 最適化されたヒーター出力で温度を更新
+    digital_twin.update_temperature(optimal_heater_power, ambient_temperature)
+    optimized_temperatures.append(digital_twin.get_current_temperature())
+
+# 結果のプロット
+plt.figure(figsize=(12, 8))
+
+# 1つ目のグラフ: IoTセンサーからの温度データ
+plt.subplot(2, 1, 1)
+plt.plot(time, temperature_data, label='Simulated IoT Data (Temperature)', color='blue')
+plt.title('Simulated IoT Data: Temperature Over Time')
+plt.xlabel('Time (steps)')
+plt.ylabel('Temperature (°C)')
+plt.legend()
+
+# 2つ目のグラフ: デジタルツインによる最適化後の温度管理
+plt.subplot(2, 1, 2)
+plt.plot(time, optimized_temperatures, label='Optimized Temperature (Digital Twin)', color='green')
+plt.title('Optimized Temperature Control using Digital Twin')
+plt.xlabel('Time (steps)')
+plt.ylabel('Temperature (°C)')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+# 最適化後のヒーター出力
+print("Optimized Heater Powers:", heater_powers[-10:])
