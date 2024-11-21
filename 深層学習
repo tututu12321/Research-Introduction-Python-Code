@@ -1,0 +1,48 @@
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Softmax
+from tensorflow.keras.datasets import cifar10
+from tensorflow.keras.utils import to_categorical
+
+# 1. Load and preprocess the dataset
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+
+# Normalize pixel values to [0, 1]
+x_train = x_train / 255.0
+x_test = x_test / 255.0
+
+# One-hot encode labels
+y_train = to_categorical(y_train, 10)
+y_test = to_categorical(y_test, 10)
+
+# 2. Define a simple CNN model
+model = Sequential([
+    # Image input layer
+    Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)),  # Convolution + ReLU
+    MaxPooling2D((2, 2)),  # Max Pooling
+
+    Conv2D(64, (3, 3), activation='relu'),  # Another convolution + ReLU
+    MaxPooling2D((2, 2)),  # Max Pooling
+
+    Flatten(),  # Flatten feature maps into a 1D vector
+
+    Dense(128, activation='relu'),  # Fully connected layer
+    Dense(10, activation='softmax')  # Output layer with Softmax
+])
+
+# 3. Compile the model
+model.compile(optimizer='adam',
+              loss='categorical_crossentropy',
+              metrics=['accuracy'])
+
+# 4. Train the model
+model.fit(x_train, y_train, epochs=5, batch_size=32, validation_split=0.2)
+
+# 5. Evaluate the model
+test_loss, test_acc = model.evaluate(x_test, y_test)
+print(f"Test Accuracy: {test_acc:.2f}")
+
+# 6. Predict with the model
+predictions = model.predict(x_test[:5])  # Predict on the first 5 test images
+print("Predicted classes:", tf.argmax(predictions, axis=1).numpy())
+print("Actual classes:", tf.argmax(y_test[:5], axis=1).numpy())
