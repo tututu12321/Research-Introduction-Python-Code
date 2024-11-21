@@ -1,0 +1,31 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define parameters
+frequency = 50  # Frequency in Hz
+omega = 2 * np.pi * frequency  # Angular frequency
+time = np.linspace(0, 1 / frequency, 1000)  # One period of the waveform
+Vm = 100  # Peak voltage
+
+# Define waveforms
+sin_wave = Vm * np.sin(omega * time)  # Sine wave
+Vrms = Vm / np.sqrt(2)  # RMS voltage
+
+# Plot sine wave
+plt.figure(figsize=(10, 6))
+plt.plot(time, sin_wave, label=r"$v(t) = V_m \sin(\omega t)$", color="blue")
+plt.axhline(Vrms, color="red", linestyle="--", label=f"RMS Value: {Vrms:.2f} V")
+plt.axhline(-Vrms, color="red", linestyle="--")
+plt.axhline(Vm, color="green", linestyle="--", label=f"Peak Value: {Vm:.2f} V")
+plt.axhline(-Vm, color="green", linestyle="--")
+
+# Add annotations and grid
+plt.title("AC Voltage Waveform and RMS Value", fontsize=14)
+plt.xlabel("Time (s)", fontsize=12)
+plt.ylabel("Voltage (V)", fontsize=12)
+plt.legend(fontsize=12)
+plt.grid(True)
+
+# Show the plot
+plt.tight_layout()
+plt.show()
