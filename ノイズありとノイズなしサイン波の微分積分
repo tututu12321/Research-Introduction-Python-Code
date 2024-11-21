@@ -1,0 +1,106 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import cumtrapz
+
+# ステップ 1: サイン波の生成
+def generate_sine_wave(frequency=1, amplitude=1, sampling_rate=100, duration=2, noise_amplitude=0):
+    """
+    サイン波を生成（ノイズあり/なし）
+    frequency: 周波数 [Hz]
+    amplitude: 振幅
+    sampling_rate: サンプリングレート [Hz]
+    duration: 時間 [秒]
+    noise_amplitude: ノイズの振幅
+    """
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    clean_wave = amplitude * np.sin(2 * np.pi * frequency * t)
+    noise = noise_amplitude * np.random.normal(size=len(t))
+    noisy_wave = clean_wave + noise
+    return t, clean_wave, noisy_wave
+
+# ステップ 2: 数値的微分
+def numerical_derivative(signal, sampling_rate):
+    """
+    信号の数値的微分を計算
+    signal: 入力信号
+    sampling_rate: サンプリングレート [Hz]
+    """
+    dt = 1 / sampling_rate
+    derivative = np.diff(signal) / dt
+    return derivative
+
+# ステップ 3: 数値的積分
+def numerical_integration(signal, t):
+    """
+    信号の数値的積分を計算（累積積分）
+    signal: 入力信号
+    t: 時間軸
+    """
+    return cumtrapz(signal, t, initial=0)
+
+# ステップ 4: プロット
+def plot_signals_and_calculations(t, clean_signal, noisy_signal, sampling_rate):
+    """
+    サイン波、微分、積分をプロット
+    """
+    # 微分計算
+    clean_derivative = numerical_derivative(clean_signal, sampling_rate)
+    noisy_derivative = numerical_derivative(noisy_signal, sampling_rate)
+
+    # 時間軸（微分後は1つデータポイントが減る）
+    t_derivative = t[:-1]
+
+    # 積分計算
+    clean_integration = numerical_integration(clean_signal, t)
+    noisy_integration = numerical_integration(noisy_signal, t)
+
+    # プロット
+    plt.figure(figsize=(14, 10))
+
+    # 元の信号
+    plt.subplot(3, 1, 1)
+    plt.plot(t, clean_signal, label="Clean Signal", color="blue")
+    plt.plot(t, noisy_signal, label="Noisy Signal", color="orange", linestyle="--")
+    plt.title("Original Signals")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Amplitude")
+    plt.legend()
+    plt.grid()
+
+    # 微分
+    plt.subplot(3, 1, 2)
+    plt.plot(t_derivative, clean_derivative, label="Clean Signal Derivative", color="green")
+    plt.plot(t_derivative, noisy_derivative, label="Noisy Signal Derivative", color="red", linestyle="--")
+    plt.title("Numerical Derivatives")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Amplitude")
+    plt.legend()
+    plt.grid()
+
+    # 積分
+    plt.subplot(3, 1, 3)
+    plt.plot(t, clean_integration, label="Clean Signal Integration", color="purple")
+    plt.plot(t, noisy_integration, label="Noisy Signal Integration", color="brown", linestyle="--")
+    plt.title("Numerical Integrations")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Amplitude")
+    plt.legend()
+    plt.grid()
+
+    plt.tight_layout()
+    plt.show()
+
+# パラメータ設定
+frequency = 2             # サイン波の周波数 [Hz]
+amplitude = 1             # サイン波の振幅
+sampling_rate = 100       # サンプリングレート [Hz]
+duration = 2              # 信号の時間 [秒]
+noise_amplitude = 0.2     # ノイズの振幅
+
+# 信号の生成
+t, clean_signal, noisy_signal = generate_sine_wave(
+    frequency, amplitude, sampling_rate, duration, noise_amplitude
+)
+
+# プロット実行
+plot_signals_and_calculations(t, clean_signal, noisy_signal, sampling_rate)
