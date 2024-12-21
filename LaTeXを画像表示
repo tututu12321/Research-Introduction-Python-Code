@@ -1,0 +1,17 @@
+import matplotlib.pyplot as plt
+
+# LaTeX expression
+latex_code = r"$Q = 8C(V_{in} - V_{DD}) + 8C(V_{in} - V_{DD}) \ldots \quad (1)$"
+
+# Create a figure and axis to render the LaTeX code
+fig, ax = plt.subplots(figsize=(6, 2))  # Set figure size
+ax.text(0.5, 0.5, latex_code, fontsize=30, va='center', ha='center')
+
+# Remove axis
+ax.axis('off')
+
+# Save the plot as an image
+plt.savefig('latex_expression.png', dpi=300, bbox_inches='tight')
+
+# Show the plot
+plt.show()
